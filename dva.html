@@ -3,19 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SAA-C03 腕試しクイズ</title>
+<title>DVA-C02 腕試しクイズ</title>
 <link rel="stylesheet" href="quiz.css">
 </head>
 <body>
 
 <div class="wrap">
   <header>
-    <p class="eyebrow">AWS Certified · SAA-C03</p>
-    <h1>Solutions Architect Associate 腕試し</h1>
-    <p class="sub">297問のプールから出題。腕試し10問／本番65問／苦手中心モード。</p>
+    <p class="eyebrow">AWS Certified · DVA-C02</p>
+    <h1>Developer Associate 腕試し</h1>
+    <p class="sub">20問のプールから出題。腕試し10問／苦手中心モード。</p>
     <nav class="cert-nav">
-      <a href="index.html" class="active">SAA</a>
-      <a href="dva.html">DVA</a>
+      <a href="index.html">SAA</a>
+      <a href="dva.html" class="active">DVA</a>
       <a href="dea.html">DEA</a>
     </nav>
     <span class="mode-tag" id="modetag">弱点復習モード</span>
@@ -29,13 +29,9 @@
 
   <section id="home" class="card">
     <div class="home-modes">
-      <button class="mode-btn primary" id="startExam">
-        <span class="mb-ico">65</span>
-        <span class="mb-tt"><span class="mb-name">本番形式で挑戦</span><span class="mb-desc">65問・130分・合格ライン72%。本試験を再現。</span></span>
-      </button>
-      <button class="mode-btn" id="startTest">
+      <button class="mode-btn primary" id="startTest">
         <span class="mb-ico">10</span>
-        <span class="mb-tt"><span class="mb-name">腕試し（10問）</span><span class="mb-desc">297問からランダムに10問。手軽に力試し。</span></span>
+        <span class="mb-tt"><span class="mb-name">腕試し（10問）</span><span class="mb-desc">20問からランダムに10問。手軽に力試し。</span></span>
       </button>
       <button class="mode-btn" id="startWeak" hidden>
         <span class="mb-ico">◎</span>
@@ -48,7 +44,7 @@
 
   <section id="quiz" class="card" aria-live="polite">
     <div class="qhead">
-      <span class="chip domain" id="domain">Storage</span>
+      <span class="chip domain" id="domain">開発</span>
       <span class="chip multi" id="multibadge" hidden>複数選択 — 2つ選べ</span>
     </div>
     <p class="qtext" id="qtext"></p>
@@ -80,7 +76,6 @@
     <div class="nav" style="justify-content:center; flex-wrap:wrap;">
       <button class="btn" id="weak" hidden>苦手中心で10問</button>
       <button class="btn" id="review" hidden>間違えた問題を復習</button>
-      <button class="btn" id="exambtn">本番65問に挑戦</button>
       <button class="btn ghost" id="retry">新しい10問に挑戦</button>
       <button class="btn ghost" id="tohome">ホームへ</button>
       <button class="btn ghost" id="resetstats" hidden>学習データをリセット</button>
@@ -90,10 +85,10 @@
 
 <script>
 window.QUIZ_CONFIG = {
-  code: "SAA",
-  data: "questions.json",
+  code: "DVA",
+  data: "questions-dva.json",
   practiceN: 10,
-  exam: { enabled: true, n: 65, minutes: 130, passPct: 0.72 }
+  exam: { enabled: false }
 };
 </script>
 <script src="quiz.js"></script>
