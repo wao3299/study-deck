@@ -1,0 +1,17 @@
+---
+import Base from "../layouts/Base.astro";
+import Quiz from "../components/Quiz.astro";
+const deck = {
+  code: "DEA",
+  active: "DEA",
+  eyebrow: "AWS Certified · DEA-C01",
+  title: "Data Engineer Associate 腕試し",
+  sub: "20問のプールから出題。腕試し10問／苦手中心モード。",
+  data: `${import.meta.env.BASE_URL}questions-dea.json`,
+  practiceN: 10,
+  exam: { enabled: false },
+};
+---
+<Base title="DEA-C01 腕試しクイズ">
+  <Quiz deck={deck} />
+</Base>
