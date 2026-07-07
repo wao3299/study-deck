@@ -19,6 +19,7 @@
 - `scripts/validate.js` … 3ファイルを構造検証（CI: `validate.yml`）
 - 学習統計は localStorage にオリジン単位で保存。SAA は旧キー（`saaQuizStats_v1` /
   `saaQuizHistory_v1`）、他資格は `quizStats_<code>_v1` / `quizHistory_<code>_v1`
+  （移行でこの SAA 特例を廃止し統一する。下記「localStorage キー統一」参照）
 - デプロイ: GitHub Pages「Deploy from branch: main / (root)」。URL は
   `https://wao3299.github.io/aws_learning/`（base パス `/aws_learning/`、カスタムドメインなし）
 - データは実行時に相対 `fetch(DATA_FILE)` で読み込み
@@ -102,13 +103,30 @@ const cert = {
 `<script>` は module（`defer` 相当）で後から実行される。したがって `window.QUIZ_CONFIG` の定義が
 必ずエンジン実行より前になり、現状と同じ実行順序・挙動を保証できる。module スコープ化しても
 `quiz.js` は `window.QUIZ_CONFIG` を読むだけで外部にグローバルを公開していないため、影響はない。
-`quiz.js` の DOM 操作・グレーディング・localStorage・統計ロジックは一切変更しない。
+`quiz.js` の DOM 操作・グレーディング・統計ロジックは変更しない（localStorage キーの導出のみ
+下記「localStorage キー統一」に従って変更する）。
 
 ## base パス処理
 
 `cert.data` を `import.meta.env.BASE_URL` 前置きの絶対パス（例 `/aws_learning/questions.json`）にする。
 これで `/aws_learning/dva` の末尾スラッシュ有無に関わらず fetch 先が一意に解決する。
 現状の相対 fetch は末尾スラッシュ依存で壊れやすいため、この点のみ改善する。
+
+## localStorage キー統一
+
+現状は SAA のみ旧キー（`saaQuizStats_v1` / `saaQuizHistory_v1`）を使い、他資格は
+`quizStats_<code>_v1` / `quizHistory_<code>_v1` を使う分岐がある。移行でこの SAA 特例を廃止し、
+**全資格を統一パターンに揃える**:
+
+```js
+const LS_KEY  = "quizStats_"   + CFG.code + "_v1";   // 例: quizStats_SAA_v1
+const LS_HIST = "quizHistory_"  + CFG.code + "_v1";   // 例: quizHistory_SAA_v1
+```
+
+- `quiz.js` の `LS_KEY` / `LS_HIST` 導出から `CFG.code === "SAA"` 分岐を削除する
+- **SAA の旧キー（`saaQuizStats_v1` / `saaQuizHistory_v1`）のデータは破棄する**（移行しない）。
+  結果として SAA の既存学習統計はリセットされる（ユーザー了承済み）
+- 旧キーの自動移行・クリーンアップ処理は行わない（YAGNI。ブラウザに残るが未参照）
 
 ## デプロイ変更
 
@@ -131,9 +149,9 @@ const cert = {
 
 ## 保持されるもの
 
-- localStorage キー（SAA=旧キー維持、他=資格コード別）→ 既存ユーザーの統計は消えない
 - 実行時 fetch アーキテクチャ、337問、キーボード操作、本番タイマー等の挙動
 - 問題データフォーマット（`d` / `t` / `q` / `o` / `a` / `oe` / `e`）
+- localStorage による統計保存の仕組み（キー名のみ統一。SAA の既存統計はリセットされる）
 
 ## 非対象（YAGNI）
 
@@ -145,7 +163,8 @@ const cert = {
 ## 作業手順（概略）
 
 1. Astro プロジェクトを初期化（`package.json` / `astro.config.mjs`、`.gitignore` に `node_modules` `dist`）
-2. `quiz.css` → `src/styles/`、`quiz.js` → `src/scripts/`、`questions*.json` → `public/` へ移動
+2. `quiz.css` → `src/styles/`、`quiz.js` → `src/scripts/`、`questions*.json` → `public/` へ移動。
+   併せて `quiz.js` の localStorage キー導出を統一（`CFG.code === "SAA"` 分岐を削除）
 3. `Base.astro` / `Quiz.astro` を作成（現 HTML と同一の要素・id・class を維持）
 4. `src/pages/index.astro` / `dva.astro` / `dea.astro` を作成（`cert` 定義のみ）
 5. ルートの旧 `index.html` / `dva.html` / `dea.html` を削除
