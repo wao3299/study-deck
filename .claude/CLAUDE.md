@@ -39,6 +39,10 @@ README.md の「デック（問題）の追加・修正」参照。要点: `publ
 
 学習統計は localStorage に deck ごと（`quizStats_<code>_v1` / `quizHistory_<code>_v1`）、問題ごとには `"d|t"` をキーとして保存される。**問題の `d` や `t` を変更するとその問題の統計がリセットされる**ので、問題修正時はむやみに変えない。`d|t` はファイル内で一意（validate.js がチェック。deck をまたいだ重複は可）。
 
+## Git 運用
+
+コミットは main へ直接行わず、基本的に新規ブランチを作成してから行う（PR ベースのマージ運用）。
+
 ## ドキュメント運用
 
 設計ドキュメント（`docs/superpowers/specs/`）はリポジトリに残す。実装計画（`docs/superpowers/plans/`）は実行完了後に削除コミットする。
