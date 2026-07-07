@@ -7,7 +7,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "validate": "node scripts/validate.js"
+    "validate": "bun scripts/validate.js"
   },
   "dependencies": {
     "astro": "^7.0.6"
