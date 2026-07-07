@@ -1,22 +1,19 @@
-<!doctype html>
-<html lang="ja">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SAA-C03 腕試しクイズ</title>
-<link rel="stylesheet" href="quiz.css">
-</head>
-<body>
-
+---
+const { deck } = Astro.props;
+const base = import.meta.env.BASE_URL; // 例: /aws_learning/
+const cfg = { code: deck.code, data: deck.data, practiceN: deck.practiceN, exam: deck.exam };
+const passPct = Math.round((deck.exam?.passPct ?? 0.72) * 100);
+---
 <div class="wrap">
   <header>
-    <p class="eyebrow">AWS Certified · SAA-C03</p>
-    <h1>Solutions Architect Associate 腕試し</h1>
-    <p class="sub">297問のプールから出題。腕試し10問／本番65問／苦手中心モード。</p>
-    <nav class="cert-nav">
-      <a href="index.html" class="active">SAA</a>
-      <a href="dva.html">DVA</a>
-      <a href="dea.html">DEA</a>
+    <p class="eyebrow">{deck.eyebrow}</p>
+    <h1>{deck.title}</h1>
+    <p class="sub">{deck.sub}</p>
+    <nav class="deck-nav">
+      <a href={base}>一覧</a>
+      <a href={`${base}saa/`} class={deck.active === "SAA" ? "active" : undefined}>SAA</a>
+      <a href={`${base}dva/`} class={deck.active === "DVA" ? "active" : undefined}>DVA</a>
+      <a href={`${base}dea/`} class={deck.active === "DEA" ? "active" : undefined}>DEA</a>
     </nav>
     <span class="mode-tag" id="modetag">弱点復習モード</span>
     <div class="progress" id="progress">
@@ -29,17 +26,19 @@
 
   <section id="home" class="card">
     <div class="home-modes">
-      <button class="mode-btn primary" id="startExam">
-        <span class="mb-ico">65</span>
-        <span class="mb-tt"><span class="mb-name">本番形式で挑戦</span><span class="mb-desc">65問・130分・合格ライン72%。本試験を再現。</span></span>
-      </button>
-      <button class="mode-btn" id="startTest">
-        <span class="mb-ico">10</span>
-        <span class="mb-tt"><span class="mb-name">腕試し（10問）</span><span class="mb-desc">297問からランダムに10問。手軽に力試し。</span></span>
+      {deck.exam.enabled && (
+        <button class="mode-btn primary" id="startExam">
+          <span class="mb-ico">{deck.exam.n}</span>
+          <span class="mb-tt"><span class="mb-name">本番形式で挑戦</span><span class="mb-desc">{deck.exam.n}問・{deck.exam.minutes}分・合格ライン{passPct}%。本試験を再現。</span></span>
+        </button>
+      )}
+      <button class={deck.exam.enabled ? "mode-btn" : "mode-btn primary"} id="startTest">
+        <span class="mb-ico">{deck.practiceN}</span>
+        <span class="mb-tt"><span class="mb-name">腕試し（{deck.practiceN}問）</span><span class="mb-desc">ランダムに{deck.practiceN}問。手軽に力試し。</span></span>
       </button>
       <button class="mode-btn" id="startWeak" hidden>
         <span class="mb-ico">◎</span>
-        <span class="mb-tt"><span class="mb-name">苦手中心（10問）</span><span class="mb-desc">間違えた・未習得の問題を優先して10問。</span></span>
+        <span class="mb-tt"><span class="mb-name">苦手中心（{deck.practiceN}問）</span><span class="mb-desc">間違えた・未習得の問題を優先して{deck.practiceN}問。</span></span>
       </button>
     </div>
     <div class="statsbox" id="homestats"></div>
@@ -48,7 +47,7 @@
 
   <section id="quiz" class="card" aria-live="polite">
     <div class="qhead">
-      <span class="chip domain" id="domain">Storage</span>
+      <span class="chip domain" id="domain"></span>
       <span class="chip multi" id="multibadge" hidden>複数選択 — 2つ選べ</span>
     </div>
     <p class="qtext" id="qtext"></p>
@@ -67,9 +66,9 @@
   <section id="result" class="card result" hidden>
     <div class="score-ring">
       <svg width="160" height="160" viewBox="0 0 160 160">
-        <circle cx="80" cy="80" r="70" fill="none" stroke="#243040" stroke-width="12"/>
+        <circle cx="80" cy="80" r="70" fill="none" stroke="#243040" stroke-width="12"></circle>
         <circle id="ring" cx="80" cy="80" r="70" fill="none" stroke="#F0A132" stroke-width="12"
-                stroke-linecap="round" stroke-dasharray="439.8" stroke-dashoffset="439.8"/>
+                stroke-linecap="round" stroke-dasharray="439.8" stroke-dashoffset="439.8"></circle>
       </svg>
       <div class="num"><b id="scorenum">0</b><span id="scoredenom">/ 10</span></div>
     </div>
@@ -78,25 +77,15 @@
     <div class="breakdown" id="breakdown"></div>
     <div class="statsbox" id="statsbox"></div>
     <div class="nav" style="justify-content:center; flex-wrap:wrap;">
-      <button class="btn" id="weak" hidden>苦手中心で10問</button>
+      <button class="btn" id="weak" hidden>苦手中心で{deck.practiceN}問</button>
       <button class="btn" id="review" hidden>間違えた問題を復習</button>
-      <button class="btn" id="exambtn">本番65問に挑戦</button>
-      <button class="btn ghost" id="retry">新しい10問に挑戦</button>
+      {deck.exam.enabled && <button class="btn" id="exambtn">本番{deck.exam.n}問に挑戦</button>}
+      <button class="btn ghost" id="retry">新しい{deck.practiceN}問に挑戦</button>
       <button class="btn ghost" id="tohome">ホームへ</button>
       <button class="btn ghost" id="resetstats" hidden>学習データをリセット</button>
     </div>
   </section>
 </div>
 
-<script>
-window.QUIZ_CONFIG = {
-  code: "SAA",
-  data: "questions.json",
-  practiceN: 10,
-  exam: { enabled: true, n: 65, minutes: 130, passPct: 0.72 }
-};
-</script>
-<script src="quiz.js"></script>
-
-</body>
-</html>
+<script is:inline set:html={`window.QUIZ_CONFIG = ${JSON.stringify(cfg)};`}></script>
+<script>import "../scripts/quiz.js";</script>
