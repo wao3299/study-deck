@@ -24,9 +24,9 @@ let timerId = null, examEndsAt = 0;
 const el = id => document.getElementById(id);
 const KEYS = ["A","B","C","D","E"];
 
-/* SAA は既存ユーザーの統計を維持するため旧キー名を使う。他資格は資格コード別 */
-const LS_KEY = CFG.code === "SAA" ? "saaQuizStats_v1" : "quizStats_" + (CFG.code || "X") + "_v1";
-const LS_HIST = CFG.code === "SAA" ? "saaQuizHistory_v1" : "quizHistory_" + (CFG.code || "X") + "_v1";
+/* localStorage キーは全 deck で統一（quizStats_<code>_v1 / quizHistory_<code>_v1） */
+const LS_KEY = "quizStats_" + (CFG.code || "X") + "_v1";
+const LS_HIST = "quizHistory_" + (CFG.code || "X") + "_v1";
 function loadLS(k, def){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch(e){ return def; } }
 function saveLS(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
 let STATS = loadLS(LS_KEY, {});

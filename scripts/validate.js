@@ -1,7 +1,11 @@
-const fs = require("fs");
+import fs from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname } from "node:path";
 
-// 検証対象。資格を追加したらここに足す
-const FILES = ["questions.json", "questions-dva.json", "questions-dea.json"];
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// 検証対象。deck を追加したらここに足す
+const FILES = ["public/questions-saa.json", "public/questions-dva.json", "public/questions-dea.json"];
 
 let grandTotal = 0;
 let hadError = false;

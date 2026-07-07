@@ -229,12 +229,12 @@
   .chart-legend .lg-p { color: var(--accent); }
 
   /* 資格切り替えナビ */
-  .cert-nav { display: flex; gap: 8px; margin: 14px 0 4px; flex-wrap: wrap; }
-  .cert-nav a {
+  .deck-nav { display: flex; gap: 8px; margin: 14px 0 4px; flex-wrap: wrap; }
+  .deck-nav a {
     font-family: var(--mono); font-size: 11px; letter-spacing: .06em;
     color: var(--muted); text-decoration: none;
     border: 1px solid var(--line); border-radius: 7px; padding: 5px 11px;
     transition: color .15s, border-color .15s, background .15s;
   }
-  .cert-nav a:hover { color: var(--ink); border-color: var(--accent); background: var(--surface-2); }
-  .cert-nav a.active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+  .deck-nav a:hover { color: var(--ink); border-color: var(--accent); background: var(--surface-2); }
+  .deck-nav a.active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
