@@ -1,88 +1,67 @@
 # aws_learning
 
-AWS 認定資格対策の自習用クイズ。GitHub Pages でホストする静的ページ。
-SAA-C03 / DVA-C02 / DEA-C01 の3資格に対応。
+AWS 認定対策の自習用クイズ。複数のデック（SAA / DVA / DEA）に対応。Astro でビルドし GitHub Pages で配信する。
+
+## デック
+
+| ページ | デック | データ |
+|---|---|---|
+| `/` | 選択ハブ | — |
+| `/saa/` | SAA-C03（297問・本番65問モードあり） | `public/questions-saa.json` |
+| `/dva/` | DVA-C02（20問） | `public/questions-dva.json` |
+| `/dea/` | DEA-C01（20問） | `public/questions-dea.json` |
 
 ## 構成
 
-共通ロジックを `quiz.js` / `quiz.css` に切り出し、資格ごとに薄い HTML ページを置く構成。
-
 | ファイル | 役割 |
 |---|---|
-| `quiz.css` | 全ページ共通のスタイル |
-| `quiz.js` | 全ページ共通のクイズロジック。`window.QUIZ_CONFIG` を読んで動作 |
-| `index.html` | SAA-C03 ページ（本番65問モードあり） |
-| `dva.html` | DVA-C02 ページ |
-| `dea.html` | DEA-C01 ページ |
-| `questions.json` | SAA-C03 問題プール（297問） |
-| `questions-dva.json` | DVA-C02 問題プール（20問） |
-| `questions-dea.json` | DEA-C01 問題プール（20問） |
-| `scripts/validate.js` | 全問題ファイルの構造チェック。CI（push / PR 時）でも実行される |
+| `src/layouts/Base.astro` | `<html><head>` と共通スタイル読み込み |
+| `src/components/Quiz.astro` | ヘッダ・deck ナビ・home/quiz/result 骨組み（唯一の実体） |
+| `src/pages/*.astro` | 各 deck ページ（`deck` 設定を渡すだけ）とハブ |
+| `src/scripts/quiz.js` | クイズエンジン。`window.QUIZ_CONFIG` を読む |
+| `src/styles/quiz.css` | 全ページ共通スタイル |
+| `public/questions-*.json` | 問題プール（マスターデータ） |
+| `scripts/validate.js` | 問題データの構造チェック（CI で実行） |
 
-### QUIZ_CONFIG
+## 開発
 
-各 HTML が `quiz.js` 読み込み前に定義する設定オブジェクト:
-
-```js
-window.QUIZ_CONFIG = {
-  code: "SAA",              // localStorage キー接頭辞・資格識別
-  data: "questions.json",   // 問題データファイル名
-  practiceN: 10,            // 腕試し・苦手モードの出題数
-  exam: { enabled: true, n: 65, minutes: 130, passPct: 0.72 } // 本番モード。無効なら { enabled: false }
-};
+```bash
+npm install
+npm run dev       # http://localhost:4321/aws_learning/
+npm run build     # dist/ に静的出力
+npm run preview   # ビルド結果を確認
+npm run validate  # 問題データの構造チェック
 ```
 
-- SAA: `exam.enabled = true`（本番65問/130分/72%）
-- DVA / DEA: `exam.enabled = false`（腕試し10問＋苦手中心の2モード）
+## デック（問題）の追加・修正
 
-資格を追加するときは、問題 JSON を作り、`QUIZ_CONFIG` を書いた HTML を用意し、
-`scripts/validate.js` の `FILES` 配列に JSON を追加する。
+1. `public/questions-<code>.json` を編集（または新規追加）
+2. 新規デックは `scripts/validate.js` の `FILES` に追加し、`src/pages/<code>.astro` を作成、`Quiz.astro` のナビと `src/pages/index.astro` のハブにリンクを足す
+3. `npm run validate` で構造チェック
+4. push すると GitHub Actions がビルドして Pages に反映
 
-## 問題データの形式
+### 問題データの形式
 
 ```json
 {
- "d": "Storage",            // 分野（出題カテゴリ）
- "t": "S3ストレージクラス",   // トピック
+ "d": "分野",
+ "t": "トピック",
  "q": "問題文",
  "o": ["選択肢1", "..."],
- "a": 1,                    // 正解。単一選択=インデックス数値 / 複数選択=インデックス配列
- "oe": ["選択肢1の解説", "..."],  // o と同順・同数
+ "a": 1,
+ "oe": ["選択肢1の解説", "..."],
  "e": "まとめ解説（HTML可: <code> <strong>）"
 }
 ```
 
-## 問題の追加・修正
+`a` は単一選択=インデックス数値 / 複数選択=インデックス配列。`d|t` は各ファイル内で一意。
 
-1. 該当の問題ファイル（`questions.json` / `questions-dva.json` / `questions-dea.json`）を編集する
-2. `node scripts/validate.js` で構造チェック（全ファイルを検証）
-3. push すれば Pages に反映される
+### 学習統計（localStorage）
 
-### 注意: 学習統計のキー
+学習履歴は localStorage に `quizStats_<code>_v1` / `quizHistory_<code>_v1` で deck ごとに保存される。
+キーは `d|t`。`d` や `t` を変更するとその問題の統計はリセット扱いになる。
 
-ブラウザの学習履歴（正答率・苦手判定）は localStorage に `"分野|トピック"`（`d|t`）をキーとして保存される。したがって:
+## デプロイ
 
-- 問題文・選択肢・解説の修正、問題の並び替えは統計に影響しない
-- **`d` や `t` を変更するとその問題の統計はリセット扱いになる**
-- `d|t` は各ファイル内で一意にすること（validate.js がチェックする。資格をまたいだ重複は許容）
-
-学習統計は資格ごとに別の localStorage キーで分離される（`quizStats_<code>_v1`）。
-ただし SAA は既存ユーザーの統計を維持するため旧キー名（`saaQuizStats_v1`）を使う。
-また localStorage はオリジン単位のため、ホスト移転で過去の統計は引き継がれない。
-
-## ローカルでの動作確認
-
-問題 JSON を fetch するため `file://` では動かない。HTTP サーバー経由で開く:
-
-```bash
-python3 -m http.server 8000
-# → http://localhost:8000        (SAA)
-#   http://localhost:8000/dva.html
-#   http://localhost:8000/dea.html
-```
-
-## 経緯
-
-もとは claude.ai の Artifact として SAA-C03 用に作成（2026-07 に全297問の正誤検証・修正を実施）。
-claude.ai の Artifact は CSP により外部 fetch ができないため、データ分離にあたり GitHub Pages へ移行。
-その後、共通ロジックを `quiz.js` / `quiz.css` に切り出し、DVA-C02 / DEA-C01 を各20問追加してマルチ資格対応にした。
+main への push で `.github/workflows/deploy.yml` がビルド・デプロイする。
+リポジトリ設定 → Pages → Source は「GitHub Actions」であること。
