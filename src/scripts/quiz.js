@@ -3,6 +3,8 @@
 
    deck ごとの設定は HTML 側で window.QUIZ_CONFIG に定義する:
    { code, data, practiceN, exam:{enabled,n,minutes,passPct} } */
+import { initSync, notifyStatsChanged, notifySessionEnd, notifyReset } from "./sync.js";
+
 const CFG = window.QUIZ_CONFIG || {};
 const EXAM = CFG.exam || { enabled: false };
 const EXAM_N = EXAM.n || 65, EXAM_MIN = EXAM.minutes || 130, PASS_PCT = EXAM.passPct || 0.72;
@@ -40,6 +42,7 @@ function recordAnswer(q, correct){
   s.lastSeen = Date.now();
   STATS[k] = s;
   saveLS(LS_KEY, STATS);
+  notifyStatsChanged();
 }
 
 function pickWeak(n){
@@ -406,6 +409,7 @@ function showResult(){
   const hist = loadLS(LS_HIST, []);
   hist.push({ d: Date.now(), score: score, total: total, mode: examMode ? "exam" : "practice" });
   saveLS(LS_HIST, hist);
+  notifySessionEnd();
   renderStats();
   el("weak").hidden = false;
   el("weak").onclick = () => startSession(pickWeak(PRACTICE_N), "苦手中心モード");
@@ -425,6 +429,7 @@ if (el("startWeak")) el("startWeak").onclick = () => startSession(pickWeak(PRACT
 function resetAll(){
   if (confirm("これまでの学習データ（成績・苦手記録）を消去します。よろしいですか？")){
     STATS = {}; saveLS(LS_KEY, STATS); saveLS(LS_HIST, []);
+    notifyReset();
     renderStats(); renderLifetime(); renderHomeStats();
   }
 }
@@ -450,4 +455,16 @@ async function boot(){
   renderLifetime();
   showHome();
 }
+
+initSync({
+  code: CFG.code || "X",
+  loadLocal: () => ({ stats: loadLS(LS_KEY, {}), hist: loadLS(LS_HIST, []) }),
+  saveLocal: (d) => { saveLS(LS_KEY, d.stats); saveLS(LS_HIST, d.hist); },
+  onCloudApplied: () => {
+    STATS = loadLS(LS_KEY, {});
+    /* 問題データ取得前（ALL 未設定）なら boot 側の初回描画に任せる */
+    if (ALL.length && !el("home").hidden) renderHomeStats();
+  },
+});
+
 boot();
