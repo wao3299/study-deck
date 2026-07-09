@@ -66,3 +66,49 @@ bun run validate  # 問題データの構造チェック
 
 main への push で `.github/workflows/deploy.yml` がビルド・デプロイする。
 リポジトリ設定 → Pages → Source は「GitHub Actions」であること。
+
+## ログインと統計同期（Firebase）
+
+Google ログインすると学習統計（成績・苦手記録・履歴）が Firestore に保存され、
+デバイス間で同期される。未ログインでも従来通り localStorage のみで動作する。
+
+### 初回セットアップ（Firebase コンソール）
+
+1. [Firebase コンソール](https://console.firebase.google.com/)でプロジェクトを作成（Analytics 不要）
+2. Authentication → Sign-in method で **Google** を有効化
+3. Firestore Database を作成（本番モード）し、ルールに以下を設定。
+   `email in [...]` の配列が利用を許可する人の許可リスト。知人の追加・削除は
+   この配列を書き換えるだけでよい（コード変更・デプロイ不要）
+
+   ```
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /users/{uid}/{document=**} {
+         allow read, write: if request.auth != null
+           && request.auth.uid == uid
+           && request.auth.token.email in [
+                'example@gmail.com'
+              ];
+       }
+     }
+   }
+   ```
+
+4. Authentication → Settings → 承認済みドメインに `wao3299.github.io` を追加
+5. プロジェクトの設定 → マイアプリでウェブアプリを追加し、表示される
+   `firebaseConfig` の `apiKey` / `authDomain` / `projectId` を
+   `src/scripts/firebase-config.js` に転記してコミット
+
+`apiKey` は公開前提の識別子でシークレットではない。データ保護は上記の
+セキュリティルールが担う。
+
+### 同期の仕様
+
+- deck ごとに `users/{uid}/decks/{code}` の 1 ドキュメントに保存
+- 各ブラウザで初回ログイン時はローカル統計をクラウドへマージ（回数は加算、履歴は連結）。
+  2 回目以降はクラウドが正
+- ログアウト中に解いた分は再ログイン時に反映されない（二重計上を避けるため）
+- 許可リスト外のアカウントでログインすると「このアカウントは同期を許可されていません」と
+  表示され、ローカルのみの従来動作になる
+- 「学習データをリセット」はログイン中ならクラウド側も削除する
