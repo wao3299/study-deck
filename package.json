@@ -11,6 +11,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "astro": "^7.0.6"
+    "astro": "^7.0.6",
+    "firebase": "^12.15.0"
   }
 }
