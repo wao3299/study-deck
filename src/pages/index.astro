@@ -1,5 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
+import AuthBox from "../components/AuthBox.astro";
 const base = import.meta.env.BASE_URL;
 const decks = [
   { href: `${base}saa/`, code: "SAA", name: "Solutions Architect Associate", note: "SAA-C03 · 297問" },
@@ -11,6 +12,7 @@ const decks = [
 <Base title="腕試しクイズ">
   <div class="wrap">
     <header>
+      <AuthBox />
       <p class="eyebrow">Quiz Decks</p>
       <h1>腕試しクイズ</h1>
       <p class="sub">挑戦するデックを選ぶ。</p>
@@ -27,3 +29,9 @@ const decks = [
     </section>
   </div>
 </Base>
+
+<script>
+  import { initFirebaseAuth, bindAuthUi } from "../scripts/auth-ui.js";
+  /* トップページはログインのみ。統計同期は各 deck ページで行われる */
+  initFirebaseAuth().then(h => { if (h) bindAuthUi(h.auth, h.authMod); });
+</script>

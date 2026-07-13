@@ -1,0 +1,12 @@
+---
+/* 認証 UI（ヘッダー右上）。DOM ID は src/scripts/auth-ui.js が結合する */
+---
+<div class="auth-box">
+  <span class="auth-warn" id="syncwarn" hidden></span>
+  <button class="btn ghost auth-btn" id="loginbtn" hidden>Google でログイン</button>
+  <span class="auth-user" id="authuser" hidden>
+    <img class="auth-avatar" id="authavatar" alt="" referrerpolicy="no-referrer">
+    <span id="authname"></span>
+    <button class="btn ghost auth-btn" id="logoutbtn">ログアウト</button>
+  </span>
+</div>

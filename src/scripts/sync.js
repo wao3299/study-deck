@@ -1,10 +1,9 @@
-/* 認証と Firestore 同期。quiz.js からは initSync + notify 系 3 関数だけを使う。
+/* Firestore 同期。quiz.js からは initSync + notify 系 3 関数だけを使う。
    設計: docs/superpowers/specs/2026-07-08-firebase-login-sync-design.md
-   firebase/* は apiKey 未設定時にバンドルへ含めないよう initSync 内で動的 import する */
-import { firebaseConfig } from "./firebase-config.js";
+   認証と UI は auth-ui.js に分離。firebase/firestore は同期が有効なときだけ動的 import する */
+import { initFirebaseAuth, bindAuthUi, showAuthWarn } from "./auth-ui.js";
 import { mergeDeckData } from "./merge.js";
 
-const el = id => document.getElementById(id);
 const DEBOUNCE_MS = 2000;
 const syncedUidKey = code => "quizSyncedUid_" + code + "_v1";
 
@@ -14,34 +13,28 @@ let user = null;
 let denied = false;  // 許可リスト外（permission-denied）を検知したら true
 let timerId = null;
 
-// 動的 import で読み込む firebase 関数（initSync 完了後に使える）
-let signOut, doc, getDoc, setDoc, deleteDoc, serverTimestamp;
+// 動的 import で読み込む firestore 関数（initSync 完了後に使える）
+let doc, getDoc, setDoc, deleteDoc, serverTimestamp;
 
 export async function initSync(opts){
-  if (!firebaseConfig.apiKey) return; // 設定未投入ならログイン UI ごと無効
   ctx = opts;
-  const [appMod, authMod, fsMod] = await Promise.all([
-    import("firebase/app"),
-    import("firebase/auth"),
-    import("firebase/firestore"),
-  ]);
+  const handles = await initFirebaseAuth();
+  if (!handles) return; // 設定未投入・読み込み失敗ならログイン UI ごと無効
+  let fsMod;
+  try { fsMod = await import("firebase/firestore"); }
+  catch(e){ console.warn("firebase/firestore の読み込みに失敗したため同期を無効化", e); return; }
   ({ doc, getDoc, setDoc, deleteDoc, serverTimestamp } = fsMod);
-  ({ signOut } = authMod);
-  const app = appMod.initializeApp(firebaseConfig);
-  auth = authMod.getAuth(app);
-  db = fsMod.getFirestore(app);
-  el("loginbtn").onclick = () => authMod.signInWithPopup(auth, new authMod.GoogleAuthProvider()).catch(()=>{});
-  el("logoutbtn").onclick = async () => {
-    await flushPending();
-    signOut(auth);
-  };
-  authMod.onAuthStateChanged(auth, u => {
-    if (timerId){ clearTimeout(timerId); timerId = null; }
-    user = u;
-    denied = false;
-    docRef = u ? doc(db, "users", u.uid, "decks", ctx.code) : null;
-    updateAuthUi();
-    if (u) pullAndReconcile(u);
+  auth = handles.auth;
+  db = fsMod.getFirestore(handles.app);
+  bindAuthUi(handles.auth, handles.authMod, {
+    beforeSignOut: flushPending,
+    onAuthChanged: u => {
+      if (timerId){ clearTimeout(timerId); timerId = null; }
+      user = u;
+      denied = false;
+      docRef = u ? doc(db, "users", u.uid, "decks", ctx.code) : null;
+      if (u) pullAndReconcile(u);
+    },
   });
   window.addEventListener("pagehide", () => { flushPending(); });
   document.addEventListener("visibilitychange", () => {
@@ -106,26 +99,11 @@ export function notifyReset(){
   deleteDoc(docRef).catch(handleSyncError);
 }
 
-function updateAuthUi(){
-  el("syncwarn").hidden = true;
-  if (user){
-    el("loginbtn").hidden = true;
-    el("authuser").hidden = false;
-    el("authavatar").src = user.photoURL || "";
-    el("authname").textContent = user.displayName || user.email || "";
-  } else {
-    el("loginbtn").hidden = false;
-    el("authuser").hidden = true;
-  }
-}
-
 function handleSyncError(e){
-  const w = el("syncwarn");
   if (e && e.code === "permission-denied"){
     denied = true;
-    w.textContent = "このアカウントは同期を許可されていません";
+    showAuthWarn("このアカウントは同期を許可されていません");
   } else {
-    w.textContent = "同期に失敗しました";
+    showAuthWarn("同期に失敗しました");
   }
-  w.hidden = false;
 }
