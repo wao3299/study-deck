@@ -53,6 +53,9 @@ for (const file of FILES) {
       if (new Set(x.a).size !== x.a.length) errors.push(`${at}: 正解インデックスが重複`);
       if (x.a.length < 2) errors.push(`${at}: 複数選択なのに正解が ${x.a.length} 件`);
     }
+    if (x.f !== undefined && typeof x.f !== "boolean") {
+      errors.push(`${at}: f は boolean である必要がある`);
+    }
     for (const [field, value] of Object.entries(x)) {
       const strs = Array.isArray(value) ? value : [value];
       strs.forEach(s => {
