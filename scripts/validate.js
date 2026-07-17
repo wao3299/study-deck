@@ -10,6 +10,7 @@ const FILES = [
   "public/questions-dva.json",
   "public/questions-dea.json",
   "public/questions-owasp.json",
+  "public/questions-menkyo.json",
 ];
 
 // quiz.js が q/o/oe/e を innerHTML で描画するため、許可した修飾タグ（属性なし）以外の
