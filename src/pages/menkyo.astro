@@ -1,0 +1,17 @@
+---
+import Base from "../layouts/Base.astro";
+import Quiz from "../components/Quiz.astro";
+const deck = {
+  code: "MENKYO",
+  active: "MENKYO",
+  eyebrow: "運転免許 · 仮免学科（第一段階）",
+  title: "仮免学科試験 対策",
+  sub: "100問のプールから出題。練習10問／苦手中心／本番50問モード。",
+  data: `${import.meta.env.BASE_URL}questions-menkyo.json`,
+  practiceN: 10,
+  exam: { enabled: true, n: 50, minutes: 30, passPct: 0.9 },
+};
+---
+<Base title="仮免学科試験 対策クイズ">
+  <Quiz deck={deck} />
+</Base>
