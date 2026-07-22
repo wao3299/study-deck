@@ -10,6 +10,7 @@ const FILES = [
   "public/questions-dva.json",
   "public/questions-dea.json",
   "public/questions-owasp.json",
+  "public/questions-menkyo.json",
 ];
 
 // quiz.js が q/o/oe/e を innerHTML で描画するため、許可した修飾タグ（属性なし）以外の
@@ -52,6 +53,9 @@ for (const file of FILES) {
     if (Array.isArray(x.a)) {
       if (new Set(x.a).size !== x.a.length) errors.push(`${at}: 正解インデックスが重複`);
       if (x.a.length < 2) errors.push(`${at}: 複数選択なのに正解が ${x.a.length} 件`);
+    }
+    if (x.f !== undefined && typeof x.f !== "boolean") {
+      errors.push(`${at}: f は boolean である必要がある`);
     }
     for (const [field, value] of Object.entries(x)) {
       const strs = Array.isArray(value) ? value : [value];

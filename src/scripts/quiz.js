@@ -8,6 +8,7 @@ import { initSync, notifyStatsChanged, notifySessionEnd, notifyReset } from "./s
 const CFG = window.QUIZ_CONFIG || {};
 const EXAM = CFG.exam || { enabled: false };
 const EXAM_N = EXAM.n || 65, EXAM_MIN = EXAM.minutes || 130, PASS_PCT = EXAM.passPct || 0.72;
+const PASS_PCT_DISP = Math.round(PASS_PCT * 100);
 const PRACTICE_N = CFG.practiceN || 10;
 const DATA_FILE = CFG.data || "questions.json";
 
@@ -152,17 +153,20 @@ function historyChartSVG(){
   const pts = data.map((d,i)=>({x:X(i), y:Y(d.pct), d}));
   const line = pts.map((p,i)=>(i?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ');
   const area = 'M'+pts[0].x.toFixed(1)+' '+(H-pad)+' '+pts.map(p=>'L'+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ')+' L'+pts[n-1].x.toFixed(1)+' '+(H-pad)+' Z';
-  const y72 = Y(72).toFixed(1);
   const dots = pts.map(p=>{
-    const col = p.d.mode==='exam' ? (p.d.pct>=72?'var(--good)':'var(--bad)') : 'var(--accent)';
+    const col = p.d.mode==='exam' ? (p.d.pct>=PASS_PCT_DISP?'var(--good)':'var(--bad)') : 'var(--accent)';
     return '<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="3" fill="'+col+'"/>';
   }).join('');
+  const passLine = EXAM.enabled
+    ? '<line x1="'+pad+'" y1="'+Y(PASS_PCT_DISP).toFixed(1)+'" x2="'+(W-pad)+'" y2="'+Y(PASS_PCT_DISP).toFixed(1)+'" class="chart-pass"/>'
+    : '';
+  const passLegend = EXAM.enabled ? '<span class="lg-pass">┄ 合格'+PASS_PCT_DISP+'%</span>' : '';
   return '<h3 class="stats-h">成績の推移（直近'+n+'回）</h3>'+
     '<div class="chart-wrap"><svg viewBox="0 0 '+W+' '+H+'" class="chart" role="img" aria-label="成績推移">'+
       '<path d="'+area+'" class="chart-area"/>'+
-      '<line x1="'+pad+'" y1="'+y72+'" x2="'+(W-pad)+'" y2="'+y72+'" class="chart-pass"/>'+
+      passLine+
       '<path d="'+line+'" class="chart-line"/>'+dots+
-    '</svg><div class="chart-legend"><span class="lg-pass">┄ 合格72%</span><span class="lg-p">● 腕試し/苦手</span><span class="lg-e">● 本番</span></div></div>';
+    '</svg><div class="chart-legend">'+passLegend+'<span class="lg-p">● 腕試し/苦手</span><span class="lg-e">● 本番</span></div></div>';
 }
 
 function renderHomeStats(){
@@ -216,6 +220,7 @@ function shuffle(arr){
 const isMulti = q => Array.isArray(q.a);
 let cur = null;
 function shuffledQuestion(q){
+  if (q.f) return q; // ○×など選択肢の順序に意味がある問題はシャッフルしない
   const order = shuffle(q.o.map((_,i)=>i));
   const o = order.map(i=>q.o[i]);
   const oe = q.oe ? order.map(i=>q.oe[i]) : q.oe;
@@ -411,8 +416,8 @@ function showResult(){
   let v,d,c;
   if (examMode){
     const pctInt = Math.round(pct*100);
-    if (pct>=PASS_PCT){ v="合格 — "+pctInt+"%"; d="合格ライン（720/1000点 ≒ 72%）を超えています。この調子で本番へ。"; c="#3DD68C"; }
-    else { v="不合格 — "+pctInt+"%"; d="合格ラインは 720/1000点（≒72%）。間違えた分野を復習して再挑戦しよう。"; c="#F2565B"; }
+    if (pct>=PASS_PCT){ v="合格 — "+pctInt+"%"; d="合格ライン（"+PASS_PCT_DISP+"%）を超えています。この調子で本番へ。"; c="#3DD68C"; }
+    else { v="不合格 — "+pctInt+"%"; d="合格ラインは "+PASS_PCT_DISP+"%。間違えた分野を復習して再挑戦しよう。"; c="#F2565B"; }
   }
   else if (pct>=0.9){ v="合格圏 — 文句なし"; d="本番でも通用するレベル。苦手分野だけ仕上げよう。"; c="#3DD68C"; }
   else if (pct>=0.7){ v="合格ライン上 — あと一歩"; d="基礎は固い。間違えた分野を復習すれば十分狙える。"; c="#F0A132"; }
